@@ -1,0 +1,5 @@
+# Claude Code session files
+.claude/
+
+# OS files
+.DS_Store
