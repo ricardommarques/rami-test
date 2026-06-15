@@ -48,17 +48,22 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:px-0">
-          <img
-            src="/logos/regular/wfp-emblem.svg"
-            alt="WFP"
-            className="h-8 w-8 shrink-0 object-contain"
-          />
-          <div className="overflow-hidden group-data-[collapsible=icon]:hidden">
-            <div className="whitespace-nowrap text-xs font-semibold leading-tight text-primary">WFP</div>
-            <div className="whitespace-nowrap text-xs leading-tight text-neutral-500">Market Signals</div>
+        <div className="flex flex-col gap-1 px-1 py-1 group-data-[collapsible=icon]:px-0">
+          <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col">
+            {/* Official WFP logo lockup (per design kit) when expanded */}
+            <img
+              src={`${import.meta.env.BASE_URL}logos/regular/wfp-logo-en.svg`}
+              alt="World Food Programme"
+              className="h-7 w-auto shrink-0 object-contain group-data-[collapsible=icon]:hidden"
+            />
+            {/* Emblem only when the sidebar is collapsed to icons */}
+            <img
+              src={`${import.meta.env.BASE_URL}logos/regular/wfp-emblem.svg`}
+              alt="WFP"
+              className="hidden h-8 w-8 shrink-0 object-contain group-data-[collapsible=icon]:block"
+            />
+            <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:ml-0" />
           </div>
-          <SidebarTrigger className="ml-auto group-data-[collapsible=icon]:ml-0" />
         </div>
       </SidebarHeader>
 
