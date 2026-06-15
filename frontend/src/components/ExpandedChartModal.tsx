@@ -34,7 +34,7 @@ export function ExpandedChartModal({ title, commodity, onClose }: ExpandedChartM
         <DialogHeader>
           <DialogTitle className="text-xl font-medium text-foreground">{title}</DialogTitle>
           <DialogDescription className="text-xs text-neutral-400">
-            WFP Official Data — {commodity.unit}
+            {commodity.officialSource === "Trading Economics" ? "Trading Economics" : "WFP Official Data"} — {commodity.unit}
           </DialogDescription>
         </DialogHeader>
         <div className="p-4">

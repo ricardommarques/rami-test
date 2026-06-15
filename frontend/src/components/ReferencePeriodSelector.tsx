@@ -15,7 +15,7 @@ interface ReferencePeriodSelectorProps {
 export function ReferencePeriodSelector({ value, onChange }: ReferencePeriodSelectorProps) {
   return (
     <div className="flex items-center gap-4">
-      <span className="text-sm font-medium text-foreground">Compare current situation to:</span>
+      <span className="text-sm font-medium text-foreground">Compare to:</span>
       <ToggleGroup
         type="single"
         variant="outline"

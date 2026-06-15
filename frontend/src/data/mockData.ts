@@ -30,10 +30,13 @@ export interface NewsItem {
   date: string;
   source: string;
   reliability: 'Verified' | 'Unverified';
-  category: string;
   country: string;
   region: string;
   dimensions: string[];
+  // Priority sub-theme each news item maps to, per dimension. Keys are the
+  // dimension ids in `dimensions`; values are the exact sub-topic labels from
+  // the "Sub-themes to monitor by dimension" reference.
+  subTopics: Record<string, string>;
 }
 
 export interface KeyMetric {
@@ -359,7 +362,7 @@ export const mockKeySummaries: Record<string, KeySummary> = {
     body: 'AI monitoring of energy price feeds and sanctions-related news shows a sharp deterioration in Syria\'s energy price situation over the past 3 weeks, reversing the improving food price trend. Subsidised Iranian fuel imports have dropped 68% since February following re-imposition of secondary sanctions. The AI system has captured diesel price data from 14 monitoring points across Syria, confirming a 19.4% week-on-week increase. Aleppo and Deir ez-Zor show the most severe impacts.',
     metrics: [
       { label: 'Diesel Price', value: 'SYP 12,500 / litre', trend: 'up' },
-      { label: 'LPG Cylinder', value: 'SYP 280,000', trend: 'up' },
+      { label: 'LNG Price', value: 'USD 16.4 / MMBtu', trend: 'up' },
       { label: 'Iranian Fuel Imports', value: '-68% vs Feb', trend: 'down' },
       { label: 'WoW Diesel Change', value: '+19.4%', trend: 'up' },
     ],
@@ -518,10 +521,12 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-10',
     source: 'Al Jazeera',
     reliability: 'Verified',
-    category: 'Price Alert',
     country: 'Lebanon',
     region: 'Beirut',
     dimensions: ['foodPrices'],
+    subTopics: {
+      foodPrices: 'Localized price surges',
+    },
   },
   {
     id: 2,
@@ -530,10 +535,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-11',
     source: 'Reuters',
     reliability: 'Verified',
-    category: 'Supply Disruption',
     country: 'Lebanon',
     region: 'National',
     dimensions: ['foodPrices', 'energyPrices'],
+    subTopics: {
+      foodPrices: 'Conflict-related price transmission',
+      energyPrices: 'Regional or global oil shock transmission',
+    },
   },
   {
     id: 3,
@@ -542,10 +550,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-11',
     source: 'X (@TripoliVoices)',
     reliability: 'Unverified',
-    category: 'Availability Alert',
     country: 'Lebanon',
     region: 'North Lebanon',
     dimensions: ['foodAvailability', 'foodPrices'],
+    subTopics: {
+      foodAvailability: 'Food shortage',
+      foodPrices: 'Availability-driven price spikes',
+    },
   },
   {
     id: 4,
@@ -554,10 +565,14 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-12',
     source: 'Naharnet',
     reliability: 'Verified',
-    category: 'Exchange Rate',
     country: 'Lebanon',
     region: 'National',
     dimensions: ['exchangeRates', 'cashLiquidity', 'foodPrices'],
+    subTopics: {
+      exchangeRates: 'Parallel market depreciation',
+      cashLiquidity: 'Informal cash markets emerging',
+      foodPrices: 'Exchange rate pass-through to food',
+    },
   },
   {
     id: 5,
@@ -566,10 +581,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-12',
     source: 'WFP Situation Report',
     reliability: 'Verified',
-    category: 'Market Access',
     country: 'Palestine',
     region: 'Northern Gaza',
     dimensions: ['accessToMarkets', 'foodAvailability'],
+    subTopics: {
+      accessToMarkets: 'Movement restrictions',
+      foodAvailability: 'Transport corridor disruption',
+    },
   },
   {
     id: 6,
@@ -578,10 +596,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-09',
     source: 'Facebook (Damascus Traders Group)',
     reliability: 'Unverified',
-    category: 'Price Alert',
     country: 'Syria',
     region: 'Damascus',
     dimensions: ['foodPrices', 'accessToMarkets'],
+    subTopics: {
+      foodPrices: 'Conflict-related price transmission',
+      accessToMarkets: 'Road or transport disruption',
+    },
   },
   {
     id: 7,
@@ -590,10 +611,12 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-11',
     source: 'OCHA Syria',
     reliability: 'Verified',
-    category: 'Market Access',
     country: 'Syria',
     region: 'Hasakah / Northeast Syria',
     dimensions: ['accessToMarkets'],
+    subTopics: {
+      accessToMarkets: 'Road or transport disruption',
+    },
   },
   {
     id: 8,
@@ -602,10 +625,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-12',
     source: 'Reuters',
     reliability: 'Verified',
-    category: 'Price Alert',
     country: 'Palestine',
     region: 'Northern Gaza',
     dimensions: ['foodPrices', 'foodAvailability'],
+    subTopics: {
+      foodPrices: 'Availability-driven price spikes',
+      foodAvailability: 'Food shortage',
+    },
   },
   {
     id: 9,
@@ -614,10 +640,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-11',
     source: 'NNA – National News Agency Lebanon',
     reliability: 'Verified',
-    category: 'Availability Alert',
     country: 'Lebanon',
     region: 'North Lebanon',
     dimensions: ['foodAvailability', 'foodPrices'],
+    subTopics: {
+      foodAvailability: 'Re-supply delays',
+      foodPrices: 'Availability-driven price spikes',
+    },
   },
   {
     id: 10,
@@ -626,10 +655,12 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-10',
     source: "L'Orient Today",
     reliability: 'Verified',
-    category: 'Price Alert',
     country: 'Lebanon',
     region: 'Beirut',
-    dimensions: ['energyPrices', 'cashLiquidity'],
+    dimensions: ['energyPrices'],
+    subTopics: {
+      energyPrices: 'Fuel price spikes',
+    },
   },
   {
     id: 11,
@@ -638,10 +669,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-12',
     source: 'OCHA oPt Situation Report',
     reliability: 'Verified',
-    category: 'Market Access',
     country: 'Palestine',
     region: 'Southern Gaza',
     dimensions: ['accessToMarkets', 'foodAvailability'],
+    subTopics: {
+      accessToMarkets: 'Movement restrictions',
+      foodAvailability: 'Import or trade disruption',
+    },
   },
   {
     id: 12,
@@ -650,10 +684,13 @@ export const mockNewsData: NewsItem[] = [
     date: '2026-05-11',
     source: 'X (@SyriaFXWatch)',
     reliability: 'Unverified',
-    category: 'Exchange Rate',
     country: 'Syria',
     region: 'National',
-    dimensions: ['exchangeRates', 'energyPrices', 'foodPrices'],
+    dimensions: ['exchangeRates', 'foodPrices'],
+    subTopics: {
+      exchangeRates: 'Parallel market depreciation',
+      foodPrices: 'Exchange rate pass-through to food',
+    },
   },
 ];
 
@@ -779,6 +816,96 @@ export const foodPriceNarrativeSignals: Record<string, Record<string, NarrativeS
   },
 };
 
+// AI-derived directional signals for energy commodities, comparing the
+// current situation against the reference period — same concept as the
+// food-price narrative signals above. Null = no relevant news since the
+// reference point.
+export const energyPriceNarrativeSignals: Record<string, Record<string, NarrativeSignal | null>> = {
+  Lebanon: {
+    diesel: {
+      direction: 'deteriorating',
+      rationale: 'Importers report diesel prices up roughly 10% since the reference period as the Strait of Hormuz partial closure raises freight and insurance costs.',
+      source: 'Lebanon Fuel Monitor',
+      date: '11 May 2026',
+      url: 'https://www.al-monitor.com/originals/2026/05/lebanon-fuel-prices',
+    },
+    gasoline: {
+      direction: 'deteriorating',
+      rationale: 'Pump prices revised upward twice this month; distributors warn of further increases if regional shipping disruption persists.',
+      source: 'Reuters – Lebanon Fuel Report',
+      date: '11 May 2026',
+      url: 'https://www.reuters.com/world/middle-east/',
+    },
+    lng: {
+      direction: 'stable',
+      rationale: 'Regional LNG spot prices have firmed slightly, but no substantive movement reported in local supply terms since the reference period.',
+      source: 'Reuters Energy',
+      date: '10 May 2026',
+      url: 'https://www.reuters.com/business/energy/',
+    },
+    electricity: null,
+  },
+  Syria: {
+    diesel: {
+      direction: 'deteriorating',
+      rationale: 'Diesel prices up 19.4% week-on-week across 14 monitoring points as subsidised Iranian fuel imports drop sharply under re-imposed sanctions.',
+      source: 'OCHA Syria',
+      date: '12 May 2026',
+    },
+    gasoline: {
+      direction: 'deteriorating',
+      rationale: 'Queues and rationing reported at stations in Aleppo and Deir ez-Zor; informal market premiums widening since the reference period.',
+      source: 'Facebook (Damascus Traders Group)',
+      date: '11 May 2026',
+    },
+    lng: null,
+    electricity: {
+      direction: 'stable',
+      rationale: 'Grid tariffs unchanged since the reference period; supply hours reduced but generator pricing broadly steady so far.',
+      source: 'OCHA Syria',
+      date: '11 May 2026',
+    },
+  },
+  Palestine: {
+    diesel: {
+      direction: 'deteriorating',
+      rationale: 'Fuel entry through crossings remains far below requirements; informal market diesel prices several times above pre-conflict levels.',
+      source: 'OCHA oPt Situation Report',
+      date: '12 May 2026',
+    },
+    gasoline: null,
+    lng: null,
+    electricity: {
+      direction: 'deteriorating',
+      rationale: 'Generator operation increasingly constrained by fuel scarcity; hourly electricity costs in informal arrangements continue to climb.',
+      source: 'WFP Situation Report',
+      date: '12 May 2026',
+    },
+  },
+};
+
+// Overall AI-derived appreciation of commodity price status per country,
+// synthesised from the individual narrative signals above. Shown as the
+// "Key Points" summary under Commodity Price Trends.
+export const foodPriceKeyPoints: Record<string, string[]> = {
+  Lebanon: [
+    'Food price pressure is mounting across monitored markets, with the overall trend clearly deteriorating — led by sharp increases in bread and the wider food basket.',
+    'Import disruptions, notably the partial closure of the Strait of Hormuz, combined with a weakening currency are the principal drivers of the increases.',
+    'Strain in cereals supply chains is feeding through to sorghum prices, while legumes remain broadly stable for now.',
+    'No monitored commodity is currently improving; the near-term outlook is for continued upward price pressure.',
+  ],
+  Syria: [
+    'Commodity prices are showing early signs of relief: the reopening of the Aleppo–Damascus highway has eased supply constraints, and traders report modest price reductions.',
+    'Improvements are concentrated around Damascus; continued disruptions in the northeast are offsetting gains in the wider cereals trade.',
+    'The situation remains fragile — recent gains depend on sustained corridor access, and reporting coverage is incomplete for several commodities.',
+  ],
+  Palestine: [
+    'Commodity prices are deteriorating sharply across the board, with no monitored commodity showing signs of improvement.',
+    'The collapse of commercial distribution networks in northern Gaza has pushed informal market prices to extreme levels, with flour reported at more than 500% above pre-conflict baselines.',
+    'Severely restricted crossing capacity and repeated denial of convoy access are driving supply collapse across staples and legumes alike.',
+  ],
+};
+
 export interface WfpDataPoint {
   date: string;
   price: number;
@@ -794,6 +921,10 @@ export interface AiUpdatePoint {
 
 export interface CommodityData {
   unit: string;
+  // Provider of the official price series plotted in `wfpPoints`. Defaults to
+  // WFP. When no official series is available at all, leave `wfpPoints` empty
+  // and the chart shows an "Official Data Not Available" placeholder instead.
+  officialSource?: 'WFP' | 'Trading Economics';
   wfpPoints: WfpDataPoint[];
   aiUpdate: AiUpdatePoint | null;
 }
@@ -932,64 +1063,799 @@ export interface StatusSignal {
   } | null;
 }
 
-export const accessToMarketsSignals: StatusSignal[] = [
-  {
-    id: 'marketOperationalRate',
-    label: 'Markets Operational',
-    currentValue: '74%',
-    status: 'moderate',
-    trend: 'deteriorating',
-    description: 'Share of monitored markets in the country that are currently open and selling food items. Down from 89% four weeks ago.',
-    aiUpdate: {
-      observation: 'Street-level reporting from Beirut suburbs indicates at least 3 major market clusters closed due to vendor inability to restock. Informal trading continues in some locations.',
-      date: '12 May 2026',
-      source: 'Reliefweb Market Monitoring – Lebanon',
-      url: 'https://reliefweb.int/country/lbn',
+// ── Descriptive, theme-based dimensions ───────────────────────────────────────
+// Some dimensions (Market Access, Food Availability) are presented as a
+// description of the *current situation* rather than a current-vs-reference
+// comparison. Each theme mirrors a priority sub-theme that AI monitoring scans
+// for, and is populated with key facts about current circumstances, each backed
+// by a link to the news item or source it was drawn from so the user can verify
+// it.
+
+export interface SituationFact {
+  text: string;
+  source: string;
+  url: string;
+  date: string;
+}
+
+export interface SituationTheme {
+  id: string;
+  title: string;
+  // Short description of what AI monitoring scans for under this theme.
+  whatToDetect: string;
+  facts: SituationFact[];
+}
+
+export const marketAccessThemes: Record<string, SituationTheme[]> = {
+  Lebanon: [
+    {
+      id: 'physicalAccess',
+      title: 'Physical access constraints',
+      whatToDetect: 'Practical difficulty in reaching markets, especially in remote or isolated areas.',
+      facts: [
+        {
+          text: 'Households in remote areas of Akkar and Baalbek-Hermel report travelling 15–25 km to reach a functioning market, up from the usual 5–10 km, as smaller local outlets close.',
+          source: 'WFP VAM – Lebanon Food Security',
+          url: 'https://www.wfp.org/countries/lebanon',
+          date: '12 May 2026',
+        },
+        {
+          text: 'Fuel scarcity is compounding isolation in mountainous districts, with several villages in the Bekaa reporting only intermittent access to provisioned markets.',
+          source: 'ACTED Lebanon Situation Update',
+          url: 'https://www.acted.org/en/countries/lebanon/',
+          date: '11 May 2026',
+        },
+      ],
     },
-  },
-  {
-    id: 'checkpoints',
-    label: 'Active Checkpoints',
-    currentValue: '18 active',
-    status: 'poor',
-    trend: 'deteriorating',
-    description: 'Number of military or security checkpoints that restrict or slow the movement of goods. Higher counts correlate with longer supply chain delays.',
-    aiUpdate: {
-      observation: 'Social media reports of new checkpoints established on the Beirut–Tripoli highway following last week\'s security incidents, adding 2–3 hours to northern supply routes.',
-      date: '11 May 2026',
-      source: 'Lebanon Crisis Observatory',
-      url: 'https://www.lcrp.gov.lb/',
+    {
+      id: 'transportDisruption',
+      title: 'Road & transport disruption',
+      whatToDetect: 'Road damage, transport shortages or increased transport barriers for consumers.',
+      facts: [
+        {
+          text: 'Shared-taxi and minibus fares have risen an estimated 30% over the past month as diesel prices climb, pricing some low-income households out of routine market trips.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+        {
+          text: 'Reduced public transport frequency on Tripoli–Beirut routes is lengthening journey times and limiting same-day market access for rural consumers.',
+          source: 'Reuters – Lebanon',
+          url: 'https://www.reuters.com/world/middle-east/',
+          date: '09 May 2026',
+        },
+      ],
     },
-  },
-  {
-    id: 'queueTimes',
-    label: 'Avg. Queue Time',
-    currentValue: '55 min',
-    status: 'poor',
-    trend: 'stable',
-    description: 'Estimated average time spent queuing to access food items at monitored market points. Values above 30 minutes indicate constrained supply.',
-    aiUpdate: {
-      observation: 'Photos shared via community groups show queues of 40–70 people at subsidised bakeries in Tripoli. Queue times estimated at 45–60 minutes based on crowd density analysis.',
-      date: '10 May 2026',
-      source: 'Twitter / Community Monitoring Network',
-      url: 'https://twitter.com/search?q=Lebanon+bakery+queue',
+    {
+      id: 'movementRestrictions',
+      title: 'Movement restrictions',
+      whatToDetect: 'Formal or informal restrictions limiting movement to markets.',
+      facts: [
+        {
+          text: 'No formal movement bans are currently in force, but localised informal checkpoints have been reported intermittently in southern border areas.',
+          source: 'OCHA Lebanon',
+          url: 'https://www.unocha.org/lebanon',
+          date: '08 May 2026',
+        },
+      ],
     },
-  },
-  {
-    id: 'routeStatus',
-    label: 'Supply Routes',
-    currentValue: '3 of 8 disrupted',
-    status: 'moderate',
-    trend: 'stable',
-    description: 'Number of major supply routes assessed as blocked or significantly delayed out of the 8 primary arterial routes monitored.',
-    aiUpdate: {
-      observation: 'The Masnaa border crossing (Lebanon–Syria) reported intermittent closures over the past week, affecting vegetable and fuel imports. Alternate routing adds ~4 hrs to delivery times.',
-      date: '09 May 2026',
-      source: 'OCHA Lebanon Situation Report',
-      url: 'https://www.unocha.org/lebanon',
+    {
+      id: 'securityRisks',
+      title: 'Security risks',
+      whatToDetect: 'Insecurity affecting travel to markets or use of markets.',
+      facts: [
+        {
+          text: 'Sporadic unrest tied to economic protests has temporarily disrupted commercial activity in central Beirut and Tripoli, though no sustained market closures have resulted.',
+          source: 'Reuters – Lebanon',
+          url: 'https://www.reuters.com/world/middle-east/',
+          date: '11 May 2026',
+        },
+      ],
     },
-  },
-];
+    {
+      id: 'marketClosure',
+      title: 'Market closure or reduced opening',
+      whatToDetect: 'Closures, partial shutdowns or reduced market opening windows.',
+      facts: [
+        {
+          text: 'Several wholesale outlets in Beirut have shortened opening hours, citing power costs and reduced footfall; vendors report opening 4–5 hours later than usual.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'protectionBarriers',
+      title: 'Protection & exclusion barriers',
+      whatToDetect: 'Deterioration in access barriers affecting specific groups.',
+      facts: [
+        {
+          text: 'Refugee households in informal settlements report heightened reluctance to access certain markets due to documentation checks and fear of harassment.',
+          source: 'ACTED Lebanon Situation Update',
+          url: 'https://www.acted.org/en/countries/lebanon/',
+          date: '09 May 2026',
+        },
+      ],
+    },
+  ],
+  Syria: [
+    {
+      id: 'physicalAccess',
+      title: 'Physical access constraints',
+      whatToDetect: 'Practical difficulty in reaching markets, especially in remote or isolated areas.',
+      facts: [
+        {
+          text: 'Reopening of the Aleppo–Damascus highway has restored last-mile access for traders and consumers along the corridor, easing previously acute isolation.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '12 May 2026',
+        },
+        {
+          text: 'Northeastern districts around Deir ez-Zor remain difficult to reach, with damaged secondary roads keeping several communities reliant on distant markets.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transportDisruption',
+      title: 'Road & transport disruption',
+      whatToDetect: 'Road damage, transport shortages or increased transport barriers for consumers.',
+      facts: [
+        {
+          text: 'Diesel scarcity continues to constrain freight movement, with hauliers reporting reduced trips and higher transport surcharges passed on to consumers.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'movementRestrictions',
+      title: 'Movement restrictions',
+      whatToDetect: 'Formal or informal restrictions limiting movement to markets.',
+      facts: [
+        {
+          text: 'Checkpoints along inter-governorate routes continue to impose delays and informal fees, raising the effective cost of reaching larger markets.',
+          source: 'Facebook (Damascus Traders Group)',
+          url: 'https://www.facebook.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'securityRisks',
+      title: 'Security risks',
+      whatToDetect: 'Insecurity affecting travel to markets or use of markets.',
+      facts: [
+        {
+          text: 'Residual insecurity in parts of the northeast continues to deter traders from travelling after dark, compressing effective trading hours.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'marketClosure',
+      title: 'Market closure or reduced opening',
+      whatToDetect: 'Closures, partial shutdowns or reduced market opening windows.',
+      facts: [
+        {
+          text: 'Markets around Damascus report a return to fuller opening hours following the corridor reopening, though several stalls remain shuttered.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'protectionBarriers',
+      title: 'Protection & exclusion barriers',
+      whatToDetect: 'Deterioration in access barriers affecting specific groups.',
+      facts: [
+        {
+          text: 'IDP households in collective shelters report difficulty accessing markets without documentation, limiting their ability to purchase at standard prices.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '09 May 2026',
+        },
+      ],
+    },
+  ],
+  Palestine: [
+    {
+      id: 'physicalAccess',
+      title: 'Physical access constraints',
+      whatToDetect: 'Practical difficulty in reaching markets, especially in remote or isolated areas.',
+      facts: [
+        {
+          text: 'Northern Gaza remains largely cut off from functioning commercial markets, with residents reliant on sporadic and informal distribution points.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+        {
+          text: 'Collapse of commercial distribution networks has left many areas without any reliably accessible market within walking distance.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transportDisruption',
+      title: 'Road & transport disruption',
+      whatToDetect: 'Road damage, transport shortages or increased transport barriers for consumers.',
+      facts: [
+        {
+          text: 'Extensive road damage and debris continue to block internal movement, with the few operable routes congested and unsafe for goods transport.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'movementRestrictions',
+      title: 'Movement restrictions',
+      whatToDetect: 'Formal or informal restrictions limiting movement to markets.',
+      facts: [
+        {
+          text: 'Severely restricted crossing capacity and repeated denial of convoy access are limiting both supply into markets and consumer movement between areas.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'securityRisks',
+      title: 'Security risks',
+      whatToDetect: 'Insecurity affecting travel to markets or use of markets.',
+      facts: [
+        {
+          text: 'Active hostilities make travel to and gathering at distribution points hazardous, with reports of crowds dispersing rapidly amid security incidents.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'marketClosure',
+      title: 'Market closure or reduced opening',
+      whatToDetect: 'Closures, partial shutdowns or reduced market opening windows.',
+      facts: [
+        {
+          text: 'The majority of formal markets remain closed or operating only intermittently; informal stalls open unpredictably depending on stock and security.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'protectionBarriers',
+      title: 'Protection & exclusion barriers',
+      whatToDetect: 'Deterioration in access barriers affecting specific groups.',
+      facts: [
+        {
+          text: 'Women, the elderly and people with disabilities face acute barriers reaching distribution points, with overcrowding and distance disproportionately excluding them.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+  ],
+};
+
+export const foodAvailabilityThemes: Record<string, SituationTheme[]> = {
+  Lebanon: [
+    {
+      id: 'foodShortage',
+      title: 'Food shortage',
+      whatToDetect: 'Scarcity or reduced availability of essential food items in markets.',
+      facts: [
+        {
+          text: 'Bread and cooking oil shortages are reported across at least 11 sub-districts in northern and eastern Lebanon, with monitored outlets frequently out of staples.',
+          source: 'WFP VAM – Lebanon Food Security',
+          url: 'https://www.wfp.org/countries/lebanon',
+          date: '12 May 2026',
+        },
+        {
+          text: 'Wheat flour is scarce, with fewer than 30% of monitored outlets holding stock as mill output falls.',
+          source: 'Reuters Middle East Commodities',
+          url: 'https://www.reuters.com/world/middle-east/',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'lowStocks',
+      title: 'Low stocks or stockout risk',
+      whatToDetect: 'Weak trader inventories, imminent runouts, rationing or sales limits.',
+      facts: [
+        {
+          text: 'Retailers in Bekaa and Akkar report rationing bread and oil per customer as inventories run low and demand exceeds available stock by an estimated 30%.',
+          source: 'ACTED Lebanon Situation Update',
+          url: 'https://www.acted.org/en/countries/lebanon/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'resupplyDelays',
+      title: 'Re-supply delays',
+      whatToDetect: 'Delays or inability to replenish markets and shops.',
+      facts: [
+        {
+          text: 'Distributors cite fuel costs and power outages slowing restocking cycles, with several wholesalers reporting replenishment lead times doubling over the past month.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'importTradeDisruption',
+      title: 'Import or trade disruption',
+      whatToDetect: 'Disruptions in food inflows through imports, borders, customs, ports or trade policy.',
+      facts: [
+        {
+          text: 'The partial closure of the Strait of Hormuz is raising freight and insurance costs on key food imports, with importers warning of tighter supply in the coming weeks.',
+          source: 'Reuters – Lebanon',
+          url: 'https://www.reuters.com/world/middle-east/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transportCorridorDisruption',
+      title: 'Transport corridor disruption',
+      whatToDetect: 'Road, bridge, corridor or trucking problems affecting food movement to markets.',
+      facts: [
+        {
+          text: 'Higher diesel prices and reduced haulier activity are lengthening delivery times on Tripoli–Beirut and Bekaa routes, slowing food movement to rural markets.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'productionShock',
+      title: 'Production or harvest shock',
+      whatToDetect: 'Shocks to domestic production that may reduce current or future food supply.',
+      facts: [
+        {
+          text: 'Domestic milling capacity is down an estimated 40% due to power and fuel constraints, reducing local flour production and increasing reliance on imports.',
+          source: 'FAO GIEWS – Lebanon',
+          url: 'https://www.fao.org/giews/countrybrief/country.jsp?code=LBN',
+          date: '08 May 2026',
+        },
+      ],
+    },
+  ],
+  Syria: [
+    {
+      id: 'foodShortage',
+      title: 'Food shortage',
+      whatToDetect: 'Scarcity or reduced availability of essential food items in markets.',
+      facts: [
+        {
+          text: 'Staple availability around Damascus is improving following the corridor reopening, though pockets of scarcity persist in the northeast.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'lowStocks',
+      title: 'Low stocks or stockout risk',
+      whatToDetect: 'Weak trader inventories, imminent runouts, rationing or sales limits.',
+      facts: [
+        {
+          text: 'Traders in Deir ez-Zor report thin inventories and occasional sales limits, while Damascus vendors are beginning to rebuild stock.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'resupplyDelays',
+      title: 'Re-supply delays',
+      whatToDetect: 'Delays or inability to replenish markets and shops.',
+      facts: [
+        {
+          text: 'Restocking has accelerated along the reopened Aleppo–Damascus corridor, but northeastern shops still report delayed deliveries due to road conditions.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'importTradeDisruption',
+      title: 'Import or trade disruption',
+      whatToDetect: 'Disruptions in food inflows through imports, borders, customs, ports or trade policy.',
+      facts: [
+        {
+          text: 'Re-imposed secondary sanctions continue to complicate import financing, though food inflows remain less affected than fuel.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transportCorridorDisruption',
+      title: 'Transport corridor disruption',
+      whatToDetect: 'Road, bridge, corridor or trucking problems affecting food movement to markets.',
+      facts: [
+        {
+          text: 'The reopening of the Aleppo–Damascus highway has restored a key freight corridor, easing food movement to markets along the route.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'productionShock',
+      title: 'Production or harvest shock',
+      whatToDetect: 'Shocks to domestic production that may reduce current or future food supply.',
+      facts: [
+        {
+          text: 'No major new production shock reported this period; monitors continue to watch cereal output in the northeast amid ongoing input shortages.',
+          source: 'FAO GIEWS – Syria',
+          url: 'https://www.fao.org/giews/countrybrief/country.jsp?code=SYR',
+          date: '08 May 2026',
+        },
+      ],
+    },
+  ],
+  Palestine: [
+    {
+      id: 'foodShortage',
+      title: 'Food shortage',
+      whatToDetect: 'Scarcity or reduced availability of essential food items in markets.',
+      facts: [
+        {
+          text: 'Severe scarcity of essential food items persists across Gaza, with northern areas largely without functioning commercial supply.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+        {
+          text: 'Flour is reported on informal markets at more than 500% above pre-conflict baselines where it is available at all.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'lowStocks',
+      title: 'Low stocks or stockout risk',
+      whatToDetect: 'Weak trader inventories, imminent runouts, rationing or sales limits.',
+      facts: [
+        {
+          text: 'The few operating vendors report near-zero inventories, with stock selling out within hours of arrival and informal rationing widespread.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'resupplyDelays',
+      title: 'Re-supply delays',
+      whatToDetect: 'Delays or inability to replenish markets and shops.',
+      facts: [
+        {
+          text: 'Collapse of commercial distribution networks means most shops cannot reliably replenish, leaving resupply dependent on sporadic humanitarian convoys.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'importTradeDisruption',
+      title: 'Import or trade disruption',
+      whatToDetect: 'Disruptions in food inflows through imports, borders, customs, ports or trade policy.',
+      facts: [
+        {
+          text: 'Severely restricted crossing capacity and repeated denial of convoy access continue to choke food inflows well below requirements.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transportCorridorDisruption',
+      title: 'Transport corridor disruption',
+      whatToDetect: 'Road, bridge, corridor or trucking problems affecting food movement to markets.',
+      facts: [
+        {
+          text: 'Extensive road damage and debris block internal movement, with the few operable routes congested and unsafe for goods transport.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'productionShock',
+      title: 'Production or harvest shock',
+      whatToDetect: 'Shocks to domestic production that may reduce current or future food supply.',
+      facts: [
+        {
+          text: 'Local food production has largely collapsed, with damage to farmland, greenhouses and livestock sharply reducing any domestic supply.',
+          source: 'FAO GIEWS – State of Palestine',
+          url: 'https://www.fao.org/giews/countrybrief/country.jsp?code=PSE',
+          date: '09 May 2026',
+        },
+      ],
+    },
+  ],
+};
+
+export const cashLiquidityThemes: Record<string, SituationTheme[]> = {
+  Lebanon: [
+    {
+      id: 'bankAtmAccess',
+      title: 'Bank & ATM access',
+      whatToDetect: 'ATM functionality, queues, branch closures, banking hours, withdrawal limits and banknote availability.',
+      facts: [
+        {
+          text: 'Only an estimated 31% of monitored ATMs are operational, with widespread cash-out notices across Beirut, Tripoli and Sidon; customers report travelling 5–15 km to find a functioning machine.',
+          source: 'BDL Monitor – Lebanon Banking Watch',
+          url: 'https://bdl.gov.lb/',
+          date: '12 May 2026',
+        },
+        {
+          text: 'A Banque du Liban circular maintains the $400/month USD withdrawal cap with no revision announced; depositor legal challenges remain pending.',
+          source: 'The Legal Agenda – Lebanon',
+          url: 'https://english.legal-agenda.com/',
+          date: '07 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'agentNetworks',
+      title: 'Agent networks',
+      whatToDetect: 'Agent liquidity, network coverage, non-operational cash points and changes in cash-out fees.',
+      facts: [
+        {
+          text: 'Around 420 informal exchange agents (sarrafa) remain active, but several large operators in Hamra and Dora have suspended USD-to-cash operations citing stock shortages.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'paymentSystems',
+      title: 'Payment systems & digital infrastructure',
+      whatToDetect: 'Network and payment-system outages, acceptance of different payment means and price differentials by payment type.',
+      facts: [
+        {
+          text: 'An estimated 88% of food market transactions are conducted in physical cash, reflecting limited card and digital acceptance as financial-system functionality stays low.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transfersAccountAccess',
+      title: 'Transfers & account access',
+      whatToDetect: 'Transfer delays, account-access regulation, remittance restrictions and usability of cash assistance.',
+      facts: [
+        {
+          text: 'Depositor access to accounts remains tightly constrained under standing capital-control practices, with conversion of balances to usable cash limited by the withdrawal cap.',
+          source: 'The Legal Agenda – Lebanon',
+          url: 'https://english.legal-agenda.com/',
+          date: '07 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'securityPhysicalRisks',
+      title: 'Security & physical risks',
+      whatToDetect: 'Looting of cash points, cash-transport disruption and security risks linked to carrying or withdrawing cash.',
+      facts: [
+        {
+          text: 'Sporadic unrest tied to economic protests has temporarily disrupted activity around banks in central Beirut and Tripoli, though no sustained cash-point incidents have been reported.',
+          source: 'Reuters – Lebanon',
+          url: 'https://www.reuters.com/world/middle-east/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'cashQualityInformal',
+      title: 'Cash quality & informal markets',
+      whatToDetect: 'Banknote-quality and counterfeit concerns and the emergence of informal cash markets at unfavourable rates.',
+      facts: [
+        {
+          text: 'Households increasingly rely on informal exchangers to obtain USD cash, typically at rates less favourable than official channels as formal access tightens.',
+          source: 'Lebanon Economy Observatory',
+          url: 'https://leb-economy.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+  ],
+  Syria: [
+    {
+      id: 'bankAtmAccess',
+      title: 'Bank & ATM access',
+      whatToDetect: 'ATM functionality, queues, branch closures, banking hours, withdrawal limits and banknote availability.',
+      facts: [
+        {
+          text: 'Formal banking access remains thin outside major cities, leaving most transactions cash-based; ATM coverage in the northeast is sparse and intermittently available.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'agentNetworks',
+      title: 'Agent networks',
+      whatToDetect: 'Agent liquidity, network coverage, non-operational cash points and changes in cash-out fees.',
+      facts: [
+        {
+          text: 'Cash-out agents in Deir ez-Zor and rural areas report recurring liquidity shortfalls, limiting the cash they can disburse to clients.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'paymentSystems',
+      title: 'Payment systems & digital infrastructure',
+      whatToDetect: 'Network and payment-system outages, acceptance of different payment means and price differentials by payment type.',
+      facts: [
+        {
+          text: 'Intermittent telecom and power disruptions periodically interrupt mobile money and electronic transfers, pushing reliance back onto physical cash.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transfersAccountAccess',
+      title: 'Transfers & account access',
+      whatToDetect: 'Transfer delays, account-access regulation, remittance restrictions and usability of cash assistance.',
+      facts: [
+        {
+          text: 'Re-imposed secondary sanctions continue to complicate cross-border settlements and remittance channels supporting household access to money.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '10 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'securityPhysicalRisks',
+      title: 'Security & physical risks',
+      whatToDetect: 'Looting of cash points, cash-transport disruption and security risks linked to carrying or withdrawing cash.',
+      facts: [
+        {
+          text: 'Checkpoints and residual insecurity along inter-governorate routes complicate the physical movement of cash between branches and agents.',
+          source: 'OCHA Syria',
+          url: 'https://www.unocha.org/syrian-arab-republic',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'cashQualityInformal',
+      title: 'Cash quality & informal markets',
+      whatToDetect: 'Banknote-quality and counterfeit concerns and the emergence of informal cash markets at unfavourable rates.',
+      facts: [
+        {
+          text: 'Informal exchangers remain the primary route to obtain hard currency in many areas, typically at spreads well above official rates.',
+          source: 'Facebook (Damascus Traders Group)',
+          url: 'https://www.facebook.com/',
+          date: '10 May 2026',
+        },
+      ],
+    },
+  ],
+  Palestine: [
+    {
+      id: 'bankAtmAccess',
+      title: 'Bank & ATM access',
+      whatToDetect: 'ATM functionality, queues, branch closures, banking hours, withdrawal limits and banknote availability.',
+      facts: [
+        {
+          text: 'Formal banking in Gaza has largely collapsed, with the great majority of branches and ATMs non-functional due to damage, power loss and insecurity.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'agentNetworks',
+      title: 'Agent networks',
+      whatToDetect: 'Agent liquidity, network coverage, non-operational cash points and changes in cash-out fees.',
+      facts: [
+        {
+          text: 'Most cash-out points are non-operational, and the few functioning agents face acute liquidity shortages, sharply limiting available cash.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'paymentSystems',
+      title: 'Payment systems & digital infrastructure',
+      whatToDetect: 'Network and payment-system outages, acceptance of different payment means and price differentials by payment type.',
+      facts: [
+        {
+          text: 'Repeated telecom and internet blackouts interrupt mobile money and digital transfers, leaving cash the only reliably accepted payment means in many areas.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '11 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'transfersAccountAccess',
+      title: 'Transfers & account access',
+      whatToDetect: 'Transfer delays, account-access regulation, remittance restrictions and usability of cash assistance.',
+      facts: [
+        {
+          text: 'Humanitarian and social transfers frequently reach accounts late or cannot be readily converted to cash, limiting timely food purchases.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'securityPhysicalRisks',
+      title: 'Security & physical risks',
+      whatToDetect: 'Looting of cash points, cash-transport disruption and security risks linked to carrying or withdrawing cash.',
+      facts: [
+        {
+          text: 'Active hostilities make moving and handling physical cash extremely hazardous, with cash-in-transit between any functioning points severely disrupted.',
+          source: 'OCHA oPt Situation Report',
+          url: 'https://www.ochaopt.org/',
+          date: '12 May 2026',
+        },
+      ],
+    },
+    {
+      id: 'cashQualityInformal',
+      title: 'Cash quality & informal markets',
+      whatToDetect: 'Banknote-quality and counterfeit concerns and the emergence of informal cash markets at unfavourable rates.',
+      facts: [
+        {
+          text: 'Informal cash brokers have become a primary route to obtain banknotes, charging steep cash-out commissions reported well above normal levels.',
+          source: 'WFP Situation Report',
+          url: 'https://www.wfp.org/emergencies/palestine-emergency',
+          date: '11 May 2026',
+        },
+      ],
+    },
+  ],
+};
 
 export const foodAvailabilitySignals: StatusSignal[] = [
   {
@@ -1173,25 +2039,27 @@ export const energyPriceData: Record<string, CommodityData> = {
       url: 'https://www.reuters.com/world/middle-east/',
     },
   },
-  lpg: {
-    unit: 'USD / cylinder',
+  lng: {
+    unit: 'USD / MMBtu',
+    // WFP does not track LNG locally; the official series comes from Trading Economics.
+    officialSource: 'Trading Economics',
     wfpPoints: [
-      { date: '03 Feb', price: 28.0 },
-      { date: '10 Feb', price: 28.5 },
-      { date: '17 Feb', price: 29.0 },
-      { date: '24 Feb', price: 29.5 },
-      { date: '03 Mar', price: 30.0 },
-      { date: '10 Mar', price: 31.0 },
-      { date: '17 Mar', price: 32.0 },
-      { date: '24 Mar', price: 33.0 },
-      { date: '31 Mar', price: 34.5 },
-      { date: '07 Apr', price: 36.0 },
-      { date: '14 Apr', price: 38.0 },
-      { date: '21 Apr', price: 40.0 },
+      { date: '03 Feb', price: 10.8 },
+      { date: '10 Feb', price: 11.0 },
+      { date: '17 Feb', price: 11.2 },
+      { date: '24 Feb', price: 11.5 },
+      { date: '03 Mar', price: 11.8 },
+      { date: '10 Mar', price: 12.1 },
+      { date: '17 Mar', price: 12.5 },
+      { date: '24 Mar', price: 12.9 },
+      { date: '31 Mar', price: 13.3 },
+      { date: '07 Apr', price: 13.8 },
+      { date: '14 Apr', price: 14.4 },
+      { date: '21 Apr', price: 15.0 },
     ],
     aiUpdate: {
-      value: 45,
-      unit: 'USD / cylinder',
+      value: 16.4,
+      unit: 'USD / MMBtu',
       date: '10 May 2026',
       source: 'Numbeo Lebanon Energy Costs',
       url: 'https://www.numbeo.com/cost-of-living/country_result.jsp?country=Lebanon',
@@ -1199,20 +2067,8 @@ export const energyPriceData: Record<string, CommodityData> = {
   },
   electricity: {
     unit: 'USD / kWh (generator)',
-    wfpPoints: [
-      { date: '03 Feb', price: 0.38 },
-      { date: '10 Feb', price: 0.40 },
-      { date: '17 Feb', price: 0.41 },
-      { date: '24 Feb', price: 0.42 },
-      { date: '03 Mar', price: 0.44 },
-      { date: '10 Mar', price: 0.45 },
-      { date: '17 Mar', price: 0.47 },
-      { date: '24 Mar', price: 0.48 },
-      { date: '31 Mar', price: 0.50 },
-      { date: '07 Apr', price: 0.52 },
-      { date: '14 Apr', price: 0.55 },
-      { date: '21 Apr', price: 0.58 },
-    ],
+    // No official price series available (neither WFP nor Trading Economics).
+    wfpPoints: [],
     aiUpdate: {
       value: 0.65,
       unit: 'USD / kWh',
@@ -1226,8 +2082,34 @@ export const energyPriceData: Record<string, CommodityData> = {
 // ── Exchange rate time-series ─────────────────────────────────────────────────
 
 export const exchangeRateData: Record<string, CommodityData> = {
-  parallelRate: {
-    unit: 'LBP / USD (parallel)',
+  // Official (central-bank) rate — stays broadly flat as it is administered.
+  officialRate: {
+    unit: 'LBP / USD (official)',
+    wfpPoints: [
+      { date: '03 Feb', price: 89500 },
+      { date: '10 Feb', price: 89500 },
+      { date: '17 Feb', price: 89500 },
+      { date: '24 Feb', price: 89500 },
+      { date: '03 Mar', price: 89500 },
+      { date: '10 Mar', price: 89500 },
+      { date: '17 Mar', price: 89600 },
+      { date: '24 Mar', price: 89600 },
+      { date: '31 Mar', price: 89600 },
+      { date: '07 Apr', price: 89700 },
+      { date: '14 Apr', price: 89700 },
+      { date: '21 Apr', price: 89700 },
+    ],
+    aiUpdate: {
+      value: 89700,
+      unit: 'LBP / USD',
+      date: '12 May 2026',
+      source: 'Banque du Liban – Official Rate',
+      url: 'https://bdl.gov.lb/',
+    },
+  },
+  // Black-market (parallel) rate — the rate households actually transact at.
+  blackMarketRate: {
+    unit: 'LBP / USD (black market)',
     wfpPoints: [
       { date: '03 Feb', price: 88500 },
       { date: '10 Feb', price: 89200 },
@@ -1250,7 +2132,8 @@ export const exchangeRateData: Record<string, CommodityData> = {
       url: 'https://livelira.com/',
     },
   },
-  blackMarketPremium: {
+  // Premium of the black-market rate over the official rate.
+  premium: {
     unit: '% above official rate',
     wfpPoints: [
       { date: '03 Feb', price: 12 },

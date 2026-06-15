@@ -3,3 +3,6 @@
 
 # OS files
 .DS_Store
+
+# restart.sh runtime files (pids + logs)
+.run/

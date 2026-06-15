@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { TrendingUp, TrendingDown, Minus, Calendar, Cpu } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/components/ui/link";
@@ -95,9 +96,10 @@ interface StatusSignalGridProps {
   signals: StatusSignal[];
   sectionTitle: string;
   subtitle?: string;
+  footer?: ReactNode;
 }
 
-export function StatusSignalGrid({ signals, sectionTitle, subtitle }: StatusSignalGridProps) {
+export function StatusSignalGrid({ signals, sectionTitle, subtitle, footer }: StatusSignalGridProps) {
   return (
     <SectionCard title={sectionTitle} description={subtitle} className="mb-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -105,6 +107,7 @@ export function StatusSignalGrid({ signals, sectionTitle, subtitle }: StatusSign
           <SignalCard key={signal.id} signal={signal} />
         ))}
       </div>
+      {footer}
     </SectionCard>
   );
 }

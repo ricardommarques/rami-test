@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import {
   ArrowLeft, Maximize2, Minus,
@@ -11,9 +11,9 @@ import {
   mockPriceData,
   energyPriceData,
   exchangeRateData,
-  accessToMarketsSignals,
-  foodAvailabilitySignals,
-  cashAvailabilitySignals,
+  marketAccessThemes,
+  foodAvailabilityThemes,
+  cashLiquidityThemes,
   mockNewsData,
   mockKeySummaries,
   countries,
@@ -23,6 +23,8 @@ import {
   historicalBaselines,
   type ReferencePeriod,
   foodPriceNarrativeSignals,
+  foodPriceKeyPoints,
+  energyPriceNarrativeSignals,
   type CommodityData,
   type KeySummary,
   type NewsItem,
@@ -35,7 +37,7 @@ import { ReferencePeriodSelector } from "@/components/ReferencePeriodSelector";
 import { ReliabilityBadge } from "@/components/ReliabilityBadge";
 import { ExpandedChartModal } from "@/components/ExpandedChartModal";
 import { MarketChatbot } from "@/components/MarketChatbot";
-import { StatusSignalGrid } from "@/components/StatusSignalGrid";
+import { SituationPanel } from "@/components/SituationPanel";
 import { RegionMap } from "@/components/RegionMap";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,19 +70,16 @@ const FOOD_PRICE_CHARTS: Array<{ key: keyof typeof mockPriceData; label: string 
 const ENERGY_PRICE_CHARTS: Array<{ key: keyof typeof energyPriceData; label: string }> = [
   { key: "diesel",      label: "Diesel" },
   { key: "gasoline",    label: "Gasoline" },
-  { key: "lpg",         label: "LPG Cylinder" },
+  { key: "lng",         label: "LNG Price" },
   { key: "electricity", label: "Electricity (Generator)" },
 ];
 
-const EXCHANGE_RATE_CHARTS: Array<{ key: keyof typeof exchangeRateData; label: string }> = [
-  { key: "parallelRate",       label: "Parallel Market Rate (LBP/USD)" },
-  { key: "blackMarketPremium", label: "Black Market Premium (% above official)" },
+const EXCHANGE_RATE_CHARTS: Array<{ key: string; label: string }> = [
+  { key: "officialRate",    label: "Official Exchange Rate (LBP/USD)" },
+  { key: "blackMarketRate", label: "Black Market Rate (LBP/USD)" },
+  { key: "premium",         label: "Black Market Premium (% above official)" },
 ];
 
-const LEVEL_TEXT_COLORS: Record<string, string> = {
-  low: "text-success-600", moderate: "text-ivory-700", elevated: "text-warning-600",
-  high: "text-warning-600", critical: "text-danger-700",
-};
 const DIRECTION_CONFIG = {
   deteriorating: { icon: <ChevronUp className="h-4 w-4" />,   label: "Deteriorated", color: "text-danger-700",  bg: "bg-danger-100" },
   stable:        { icon: <Minus className="h-4 w-4" />,       label: "Stable",       color: "text-ivory-700",   bg: "bg-ivory-50" },
@@ -89,21 +88,29 @@ const DIRECTION_CONFIG = {
 
 // ── AI Overall Signal ────────────────────────────────────────────────────────
 
+// Text colors follow the box style: light red box → dark red text, light
+// yellow → dark yellow, light green → dark green, light grey → dark grey.
+const BANNER_PALETTES = {
+  neutral: { box: "bg-neutral-100 border-neutral-300", title: "text-neutral-800", body: "text-neutral-700", muted: "text-neutral-500" },
+  danger:  { box: "bg-danger-100 border-danger-300",   title: "text-danger-800",  body: "text-danger-700",  muted: "text-danger-600" },
+  success: { box: "bg-success-100 border-success-300", title: "text-success-800", body: "text-success-700", muted: "text-success-600" },
+  ivory:   { box: "bg-ivory-50 border-ivory-200",      title: "text-ivory-800",   body: "text-ivory-700",   muted: "text-ivory-600" },
+};
+
 function AiSignalBanner({ summary }: { summary: KeySummary }) {
   const dir = DIRECTION_CONFIG[summary.direction];
-  const levelText = LEVEL_TEXT_COLORS[summary.alertLevel] || "text-neutral-700";
 
-  const bannerBg =
-    summary.confidence === 0              ? "bg-neutral-100 border-neutral-300" :
-    summary.direction === "deteriorating" ? "bg-danger-100 border-danger-300" :
-    summary.direction === "improving"     ? "bg-success-100 border-success-300" :
-                                            "bg-ivory-50 border-ivory-200";
+  const palette =
+    summary.confidence === 0              ? BANNER_PALETTES.neutral :
+    summary.direction === "deteriorating" ? BANNER_PALETTES.danger :
+    summary.direction === "improving"     ? BANNER_PALETTES.success :
+                                            BANNER_PALETTES.ivory;
 
   return (
-    <div className={`mb-8 border p-5 ${bannerBg}`}>
+    <div className={`mb-8 rounded-md border p-5 ${palette.box}`}>
       {/* Header row */}
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">Overview</h2>
+        <h2 className={`text-sm font-semibold uppercase tracking-wide ${palette.title}`}>Overview</h2>
 
         {summary.confidence !== 0 && (
           <span className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs ${dir.bg} ${dir.color}`}>
@@ -111,22 +118,19 @@ function AiSignalBanner({ summary }: { summary: KeySummary }) {
             {dir.label}
           </span>
         )}
-        <div className="ml-auto flex items-center gap-1.5 text-xs text-neutral-400">
+        <div className={`ml-auto flex items-center gap-1.5 text-xs ${palette.muted}`}>
           <span>Updated {summary.lastUpdated}</span>
         </div>
       </div>
 
       {/* Headline */}
-      <h3 className={`mb-3 text-base leading-snug ${summary.confidence === 0 ? "text-neutral-500" : levelText}`}>
+      <h3 className={`mb-3 text-base leading-snug ${palette.title}`}>
         {summary.headline}
       </h3>
 
       {/* Body */}
       {summary.body.split("\n\n").map((para, i) => (
-        <p
-          key={i}
-          className={`mb-3 text-sm leading-relaxed ${summary.confidence === 0 ? "text-neutral-500" : "text-neutral-700"}`}
-        >
+        <p key={i} className={`mb-3 text-sm leading-relaxed ${palette.body}`}>
           {para}
         </p>
       ))}
@@ -134,7 +138,7 @@ function AiSignalBanner({ summary }: { summary: KeySummary }) {
       {/* Sources */}
       {summary.confidence !== 0 && summary.sources && summary.sources.length > 0 && (
         <div className="mt-4 border-t border-neutral-alpha-200 pt-3">
-          <div className="mb-1.5 text-xs text-neutral-500">Sources</div>
+          <div className={`mb-1.5 text-xs ${palette.muted}`}>Sources</div>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             {summary.sources.map((s) => (
               <Link
@@ -202,7 +206,15 @@ const NARRATIVE_CONFIG = {
   stable:        { label: "Stable",       icon: <Minus className="h-3.5 w-3.5" />,       bg: "bg-ivory-50",    border: "border-ivory-200",   text: "text-ivory-700" },
 };
 
-function NarrativeSignalCard({ signal }: { signal: NarrativeSignal | null }) {
+function NarrativeSignalCard({
+  signal,
+  commodity,
+  refPeriod,
+}: {
+  signal: NarrativeSignal | null;
+  commodity?: CommodityData;
+  refPeriod?: ReferencePeriod;
+}) {
   if (!signal) {
     return (
       <div className="mt-3 flex flex-1 flex-col border border-dashed border-neutral-200 bg-neutral-50 p-3">
@@ -217,6 +229,9 @@ function NarrativeSignalCard({ signal }: { signal: NarrativeSignal | null }) {
         {cfg.icon}
         {cfg.label}
       </div>
+      {commodity && refPeriod && (
+        <PriceVariation commodity={commodity} refPeriod={refPeriod} className="mb-2" />
+      )}
       <p className="mb-2 text-xs leading-relaxed text-foreground">{signal.rationale}</p>
       <div className="mb-1 mt-auto flex items-center gap-1 text-xs text-neutral-500">
         <Calendar className="h-3 w-3" />
@@ -242,6 +257,27 @@ function NarrativeSignalCard({ signal }: { signal: NarrativeSignal | null }) {
   );
 }
 
+// ── WFP DataViz external link card ────────────────────────────────────────────
+
+function WfpDataVizCard({ url, children }: { url: string; children: ReactNode }) {
+  return (
+    <Card className="mt-4 gap-0 rounded-md border-primary bg-primary-50 py-3 shadow-none">
+      <CardContent className="flex items-center justify-between px-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 shrink-0 text-primary" />
+          <span className="text-sm text-neutral-700">{children}</span>
+        </div>
+        <Button asChild size="xs" className="ml-4 shrink-0">
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            Open DataViz
+            <ExternalLink />
+          </a>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Price chart ───────────────────────────────────────────────────────────────
 
 const priceChartConfig = {
@@ -251,19 +287,130 @@ const priceChartConfig = {
   },
 } satisfies ChartConfig;
 
+// Maps the "Compare current situation to" reference period onto how many weekly
+// WFP points back it sits, so the price-variation readout matches that control.
+const REF_PERIOD_LABEL: Record<ReferencePeriod, string> = {
+  lastWeek: "last week",
+  lastMonth: "last month",
+  threeMonthsAgo: "3 months ago",
+};
+const REF_PERIOD_WEEKS_BACK: Record<ReferencePeriod, number> = {
+  lastWeek: 1,
+  lastMonth: 4,
+  threeMonthsAgo: 12,
+};
+
+// Simplistic current-price + variation readout shown below the plot. The
+// current price is the latest WFP point; the variation compares it to the
+// point at the selected reference period.
+function PriceVariation({
+  commodity,
+  refPeriod,
+  className = "mt-3",
+}: {
+  commodity: CommodityData;
+  refPeriod: ReferencePeriod;
+  className?: string;
+}) {
+  const points = commodity.wfpPoints;
+  if (points.length === 0) return null;
+  const current = points[points.length - 1].price;
+  const refIdx = Math.max(0, points.length - 1 - REF_PERIOD_WEEKS_BACK[refPeriod]);
+  const reference = points[refIdx].price;
+  const pct = reference !== 0 ? ((current - reference) / reference) * 100 : 0;
+  const pctColor = pct > 0 ? "text-danger-600" : pct < 0 ? "text-success-600" : "text-neutral-500";
+  return (
+    <div className={`flex items-baseline justify-between ${className}`}>
+      <span className="text-base font-semibold text-foreground">
+        {current} {commodity.unit}
+      </span>
+      <span className="text-xs">
+        <span className={pctColor}>
+          {pct > 0 ? "+" : ""}{pct.toFixed(1)}%
+        </span>
+        <span className="text-neutral-400"> vs {REF_PERIOD_LABEL[refPeriod]}</span>
+      </span>
+    </div>
+  );
+}
+
+// Card shown under exchange-rate charts: the current rate is the AI signal
+// (latest AI-collected value), and the variation compares it to the WFP point
+// at the reference period selected in "Compare current situation to".
+function AiVariationCard({
+  commodity,
+  refPeriod,
+}: {
+  commodity: CommodityData;
+  refPeriod: ReferencePeriod;
+}) {
+  const { aiUpdate, wfpPoints } = commodity;
+  if (!aiUpdate) {
+    return (
+      <div className="mt-3 flex flex-1 flex-col border border-dashed border-neutral-200 bg-neutral-50 p-3">
+        <p className="text-xs italic text-neutral-400">Data not available</p>
+      </div>
+    );
+  }
+
+  const refIdx = wfpPoints.length > 0
+    ? Math.max(0, wfpPoints.length - 1 - REF_PERIOD_WEEKS_BACK[refPeriod])
+    : -1;
+  const reference = refIdx >= 0 ? wfpPoints[refIdx].price : null;
+  const pct = reference && reference !== 0 ? ((aiUpdate.value - reference) / reference) * 100 : null;
+  const pctColor = pct === null ? "text-neutral-500" : pct > 0 ? "text-danger-600" : pct < 0 ? "text-success-600" : "text-neutral-500";
+
+  return (
+    <div className="mt-3 flex flex-1 flex-col border border-ivory-200 bg-ivory-50 p-3">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-base font-semibold text-foreground">
+          {aiUpdate.value.toLocaleString()} {aiUpdate.unit}
+        </span>
+        {pct !== null && (
+          <span className="text-xs">
+            <span className={pctColor}>{pct > 0 ? "+" : ""}{pct.toFixed(1)}%</span>
+            <span className="text-neutral-400"> vs {REF_PERIOD_LABEL[refPeriod]}</span>
+          </span>
+        )}
+      </div>
+      <div className="mb-1 mt-auto flex items-center gap-1 text-xs text-neutral-500">
+        <Calendar className="h-3 w-3" />
+        {aiUpdate.date}
+      </div>
+      <Link
+        href={aiUpdate.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="max-w-full text-xs"
+        title={aiUpdate.source}
+      >
+        <ExternalLink className="h-3 w-3 shrink-0" />
+        <span className="truncate">{aiUpdate.source}</span>
+      </Link>
+    </div>
+  );
+}
+
 function PriceChart({
   label,
   commodity,
   onExpand,
   narrativeSignal,
   useNarrative,
+  aiVariation,
+  refPeriod,
 }: {
   label: string;
   commodity: CommodityData;
   onExpand: () => void;
   narrativeSignal?: NarrativeSignal | null;
   useNarrative?: boolean;
+  aiVariation?: boolean;
+  refPeriod?: ReferencePeriod;
 }) {
+  const hasData = commodity.wfpPoints.length > 0;
+  const sourceLabel =
+    commodity.officialSource === "Trading Economics" ? "Trading Economics" : "WFP Official Data";
   return (
     <div className="flex h-full flex-col">
       <div className="mb-2 flex min-h-[20px] items-center justify-between">
@@ -271,21 +418,25 @@ function PriceChart({
       </div>
       <Card className="group relative gap-0 rounded-none py-3 shadow-none">
         <CardContent className="px-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onExpand}
-                className="absolute right-2 top-2 z-10 text-primary opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                <Maximize2 />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Expand chart</TooltipContent>
-          </Tooltip>
+          {hasData && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onExpand}
+                  className="absolute right-2 top-2 z-10 text-primary opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <Maximize2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Expand chart</TooltipContent>
+            </Tooltip>
+          )}
+          {hasData ? (
+            <>
           <div className="mb-1 min-h-[2rem] text-xs leading-4 text-neutral-400">
-            WFP Official Data · {commodity.unit}
+            {sourceLabel} · {commodity.unit}
           </div>
           <ChartContainer config={priceChartConfig} className="h-[180px] w-full">
             <LineChart data={commodity.wfpPoints} margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
@@ -319,10 +470,19 @@ function PriceChart({
               />
             </LineChart>
           </ChartContainer>
+            </>
+          ) : (
+            <div className="flex h-[calc(180px+2rem)] flex-col items-center justify-center gap-2 text-center text-neutral-400">
+              <BarChart3 className="h-6 w-6" />
+              <span className="text-sm">Official Data Not Available</span>
+            </div>
+          )}
         </CardContent>
       </Card>
-      {useNarrative
-        ? <NarrativeSignalCard signal={narrativeSignal ?? null} />
+      {aiVariation && refPeriod
+        ? <AiVariationCard commodity={commodity} refPeriod={refPeriod} />
+        : useNarrative
+        ? <NarrativeSignalCard signal={narrativeSignal ?? null} commodity={commodity} refPeriod={refPeriod} />
         : <AiUpdateCard commodity={commodity} />}
     </div>
   );
@@ -384,12 +544,16 @@ function NewsRow({ news, idx }: { news: NewsItem; idx: number }) {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500">
         <span className="font-medium text-primary">{news.source}</span>
         <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{news.date}</span>
-        {news.dimensions.map((d) => (
-          <Badge key={d} variant="secondary">
-            <Tag />
-            {signalLabels[d as keyof typeof signalLabels] || d}
-          </Badge>
-        ))}
+        {news.dimensions.map((d) => {
+          const label = signalLabels[d as keyof typeof signalLabels] || d;
+          const subTopic = news.subTopics?.[d];
+          return (
+            <Badge key={d} variant="secondary">
+              <Tag />
+              {subTopic ? `${label} · ${subTopic}` : label}
+            </Badge>
+          );
+        })}
         <span className="flex items-center gap-1"><Globe className="h-3 w-3" />{news.country}</span>
         <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{news.region}</span>
       </div>
@@ -673,33 +837,29 @@ export function SignalDetail() {
               const url = datavizUrls[country?.toLowerCase() ?? ""];
               if (!url) return null;
               return (
-                <Card className="mt-4 gap-0 rounded-md border-primary bg-primary-50 py-3 shadow-none">
-                  <CardContent className="flex items-center justify-between px-3">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4 shrink-0 text-primary" />
-                      <span className="text-sm text-neutral-700">
-                        Explore full price data and trends on the <strong>WFP DataViz platform</strong> for {countryName}.
-                      </span>
-                    </div>
-                    <Button asChild size="xs" className="ml-4 shrink-0">
-                      <a href={url} target="_blank" rel="noopener noreferrer">
-                        Open DataViz
-                        <ExternalLink />
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
+                <WfpDataVizCard url={url}>
+                  Explore full price data and trends on the <strong>WFP DataViz platform</strong> for {countryName}.
+                </WfpDataVizCard>
               );
             })()}
+            {/* Key points summary */}
+            {(foodPriceKeyPoints[countryName] ?? []).length > 0 && (
+              <div className="mt-6">
+                <h3 className="mb-2 text-sm font-semibold text-foreground">Key Points</h3>
+                <ul className="list-disc space-y-2 pl-5">
+                  {foodPriceKeyPoints[countryName].map((point, idx) => (
+                    <li key={idx} className="text-sm text-neutral-700">
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </SectionCard>
         )}
 
         {signal === "energyPrices" && (
-          <SectionCard
-            title="Energy Price Trends"
-            description="Blue line: WFP Official Data (12 weeks) · Yellow card: latest AI signal"
-            className="mb-8"
-          >
+          <SectionCard title="Energy Price Trends" className="mb-8">
             <div className="grid grid-cols-4 gap-4">
               {ENERGY_PRICE_CHARTS.map((c) => (
                 <PriceChart
@@ -707,6 +867,9 @@ export function SignalDetail() {
                   label={c.label}
                   commodity={applyRegionToCommodity(energyPriceData[c.key], regionMultiplier)}
                   onExpand={() => setExpandedChart({ key: c.key, source: "energy" })}
+                  useNarrative
+                  refPeriod={refPeriod}
+                  narrativeSignal={energyPriceNarrativeSignals[countryName]?.[c.key] ?? null}
                 />
               ))}
             </div>
@@ -714,91 +877,101 @@ export function SignalDetail() {
         )}
 
         {signal === "accessToMarkets" && (
-          <StatusSignalGrid
-            signals={accessToMarketsSignals}
+          <SituationPanel
+            themes={marketAccessThemes[countryName] ?? []}
             sectionTitle="Market Access Indicators"
-            subtitle={selectedRegion
-              ? `Status signals · Filtered to ${selectedRegion}`
-              : "Status signals · AI-updated continuously"}
+            emptyMessage="No market access information available"
+            region={selectedRegion}
+            footer={(() => {
+              const mfiUrls: Record<string, string> = {
+                lebanon:   "https://dataviz.vam.wfp.org/the-middle-east-and-northern-africa/lebanon/market-functionality-index?current_page=1&country=lbn",
+                syria:     "https://dataviz.vam.wfp.org/the-middle-east-and-northern-africa/syrian-arab-republic/market-functionality-index?current_page=1&country=syr",
+                palestine: "https://dataviz.vam.wfp.org/the-middle-east-and-northern-africa/state-of-palestine/market-functionality-index?current_page=1&country=pse",
+              };
+              const url = mfiUrls[country?.toLowerCase() ?? ""];
+              if (!url) return null;
+              return (
+                <WfpDataVizCard url={url}>
+                  Explore <strong>Market Functionality Index</strong> page on the <strong>WFP DataViz platform</strong> for {countryName}.
+                </WfpDataVizCard>
+              );
+            })()}
           />
         )}
 
         {signal === "foodAvailability" && (
-          <StatusSignalGrid
-            signals={foodAvailabilitySignals}
+          <SituationPanel
+            themes={foodAvailabilityThemes[countryName] ?? []}
             sectionTitle="Food Availability Indicators"
-            subtitle={selectedRegion
-              ? `Status signals · Filtered to ${selectedRegion}`
-              : "Status signals · AI-updated continuously"}
+            emptyMessage="No food availability information available"
+            region={selectedRegion}
+            footer={(() => {
+              const mfiUrls: Record<string, string> = {
+                lebanon:   "https://dataviz.vam.wfp.org/the-middle-east-and-northern-africa/lebanon/market-functionality-index?current_page=1&country=lbn",
+                syria:     "https://dataviz.vam.wfp.org/the-middle-east-and-northern-africa/syrian-arab-republic/market-functionality-index?current_page=1&country=syr",
+                palestine: "https://dataviz.vam.wfp.org/the-middle-east-and-northern-africa/state-of-palestine/market-functionality-index?current_page=1&country=pse",
+              };
+              const url = mfiUrls[country?.toLowerCase() ?? ""];
+              if (!url) return null;
+              return (
+                <WfpDataVizCard url={url}>
+                  Explore <strong>Market Functionality Index</strong> page on the <strong>WFP DataViz platform</strong> for {countryName}.
+                </WfpDataVizCard>
+              );
+            })()}
           />
         )}
 
         {signal === "cashLiquidity" && (
-          <StatusSignalGrid
-            signals={cashAvailabilitySignals}
+          <SituationPanel
+            themes={cashLiquidityThemes[countryName] ?? []}
             sectionTitle="Cash & Liquidity Indicators"
-            subtitle={selectedRegion
-              ? `Status signals · Filtered to ${selectedRegion}`
-              : "Status signals · AI-updated continuously"}
+            emptyMessage="No cash & liquidity information available"
+            region={selectedRegion}
           />
         )}
 
         {signal === "exchangeRates" && (
           <SectionCard
             title="Exchange Rate Trends"
-            description="Blue line: WFP Official Data (12 weeks) · Yellow card: latest AI signal"
+            description="Blue line: WFP Official Data (12 weeks) · Yellow card: latest AI signal vs the selected reference period"
             className="mb-8"
           >
-            <div className="grid grid-cols-2 gap-6">
-              {EXCHANGE_RATE_CHARTS.map((c) => (
-                <PriceChart
-                  key={c.key}
-                  label={c.label}
-                  commodity={applyRegionToCommodity(exchangeRateData[c.key], regionMultiplier)}
-                  onExpand={() => setExpandedChart({ key: c.key, source: "exchange" })}
-                />
-              ))}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {EXCHANGE_RATE_CHARTS.map((c) => {
+                const series = exchangeRateData[c.key];
+                if (!series) {
+                  return (
+                    <div key={c.key} className="flex h-full flex-col">
+                      <div className="mb-2 flex min-h-[20px] items-center justify-between">
+                        <h3 className="text-sm font-medium text-foreground">{c.label}</h3>
+                      </div>
+                      <Card className="gap-0 rounded-none py-3 shadow-none">
+                        <CardContent className="flex h-[calc(180px+2rem)] flex-col items-center justify-center gap-2 px-3 text-center text-neutral-400">
+                          <BarChart3 className="h-6 w-6" />
+                          <span className="text-sm">Data not available</span>
+                        </CardContent>
+                      </Card>
+                      <div className="mt-3 flex flex-1 flex-col border border-dashed border-neutral-200 bg-neutral-50 p-3">
+                        <p className="text-xs italic text-neutral-400">Data not available</p>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <PriceChart
+                    key={c.key}
+                    label={c.label}
+                    commodity={applyRegionToCommodity(series, regionMultiplier)}
+                    onExpand={() => setExpandedChart({ key: c.key, source: "exchange" })}
+                    aiVariation
+                    refPeriod={refPeriod}
+                  />
+                );
+              })}
             </div>
           </SectionCard>
         )}
-
-        {/* ── KEY POINTS: Commodity Price Trends summary ───────────────────── */}
-        {signal === "foodPrices" && (() => {
-          const countrySignals = foodPriceNarrativeSignals[countryName] ?? {};
-          const points = FOOD_PRICE_CHARTS
-            .map((c) => ({ ...c, signal: countrySignals[c.key] ?? null }))
-            .filter((c) => c.signal !== null) as Array<{
-              key: string;
-              label: string;
-              signal: { direction: string; rationale: string; source: string; date: string };
-            }>;
-          if (points.length === 0) return null;
-
-          const directionStyle: Record<string, { dot: string; label: string }> = {
-            deteriorating: { dot: "bg-danger-500",  label: "Deteriorating" },
-            improving:     { dot: "bg-success-500", label: "Improving" },
-            stable:        { dot: "bg-ivory-300",   label: "Stable" },
-          };
-
-          return (
-            <SectionCard title="Key Points" className="mb-8">
-              <ul className="space-y-2">
-                {points.map((p) => {
-                  const style = directionStyle[p.signal.direction] ?? directionStyle.stable;
-                  return (
-                    <li key={p.key} className="flex items-start gap-2 text-sm text-neutral-700">
-                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${style.dot}`} />
-                      <span>
-                        <strong className="font-medium text-foreground">{p.label}</strong>{" "}
-                        <span className="text-xs text-neutral-500">({style.label})</span> — {p.signal.rationale}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </SectionCard>
-          );
-        })()}
 
         {/* ── 3. NEWS & INTELLIGENCE (filtered by dimension) ───────────────── */}
         <SectionCard title="News & Intelligence" className="mb-8">
