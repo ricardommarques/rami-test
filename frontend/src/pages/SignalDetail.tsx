@@ -11,6 +11,8 @@ import {
   mockPriceData,
   energyPriceData,
   exchangeRateData,
+  exchangeRateDataByCountry,
+  currencyByCountry,
   marketAccessThemes,
   foodAvailabilityThemes,
   cashLiquidityThemes,
@@ -74,9 +76,9 @@ const ENERGY_PRICE_CHARTS: Array<{ key: keyof typeof energyPriceData; label: str
   { key: "electricity", label: "Electricity (Generator)" },
 ];
 
-const EXCHANGE_RATE_CHARTS: Array<{ key: string; label: string }> = [
-  { key: "officialRate",    label: "Official Exchange Rate (LBP/USD)" },
-  { key: "blackMarketRate", label: "Black Market Rate (LBP/USD)" },
+const exchangeRateCharts = (currency: string): Array<{ key: string; label: string }> => [
+  { key: "officialRate",    label: `Official Exchange Rate (${currency}/USD)` },
+  { key: "blackMarketRate", label: `Black Market Rate (${currency}/USD)` },
   { key: "premium",         label: "Black Market Premium (% above official)" },
 ];
 
@@ -184,16 +186,18 @@ function AiUpdateCard({ commodity }: { commodity: CommodityData }) {
         <Calendar className="h-3 w-3" />
         {aiUpdate.date}
       </div>
-      <Link
-        href={aiUpdate.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="max-w-full text-xs"
-        title={aiUpdate.source}
-      >
-        <ExternalLink className="h-3 w-3 shrink-0" />
-        <span className="truncate">{aiUpdate.source}</span>
-      </Link>
+      {aiUpdate.source && (
+        <Link
+          href={aiUpdate.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="max-w-full text-xs"
+          title={aiUpdate.source}
+        >
+          <ExternalLink className="h-3 w-3 shrink-0" />
+          <span className="truncate">{aiUpdate.source}</span>
+        </Link>
+      )}
     </div>
   );
 }
@@ -377,16 +381,18 @@ function AiVariationCard({
         <Calendar className="h-3 w-3" />
         {aiUpdate.date}
       </div>
-      <Link
-        href={aiUpdate.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="max-w-full text-xs"
-        title={aiUpdate.source}
-      >
-        <ExternalLink className="h-3 w-3 shrink-0" />
-        <span className="truncate">{aiUpdate.source}</span>
-      </Link>
+      {aiUpdate.source && (
+        <Link
+          href={aiUpdate.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="max-w-full text-xs"
+          title={aiUpdate.source}
+        >
+          <ExternalLink className="h-3 w-3 shrink-0" />
+          <span className="truncate">{aiUpdate.source}</span>
+        </Link>
+      )}
     </div>
   );
 }
@@ -657,6 +663,11 @@ export function SignalDetail() {
 
   const countryData = countries.find((c) => c.name.toLowerCase() === country?.toLowerCase());
   const signalWeeks = countryData?.signals[signal as keyof typeof countryData.signals];
+
+  // Exchange-rate data and labels are country-specific (e.g. LBP for Lebanon,
+  // SYP for Syria). Fall back to the default LBP dataset for other countries.
+  const exchangeSeries = exchangeRateDataByCountry[countryName] ?? exchangeRateData;
+  const exchangeCharts = exchangeRateCharts(currencyByCountry[countryName] ?? "LBP");
   const currentWeekLevel = signalWeeks?.[4]?.level;
   const referenceLevel =
     refPeriod === "lastWeek"
@@ -717,7 +728,7 @@ export function SignalDetail() {
     const base =
       expandedChart.source === "food" ? mockPriceData[expandedChart.key] :
       expandedChart.source === "energy" ? energyPriceData[expandedChart.key] :
-      expandedChart.source === "exchange" ? exchangeRateData[expandedChart.key] : null;
+      expandedChart.source === "exchange" ? exchangeSeries[expandedChart.key] : null;
     return base ? applyRegionToCommodity(base, regionMultiplier) : null;
   };
 
@@ -725,7 +736,7 @@ export function SignalDetail() {
     if (!expandedChart) return "";
     if (expandedChart.source === "food") return FOOD_PRICE_CHARTS.find((c) => c.key === expandedChart.key)?.label || "";
     if (expandedChart.source === "energy") return ENERGY_PRICE_CHARTS.find((c) => c.key === expandedChart.key)?.label || "";
-    if (expandedChart.source === "exchange") return EXCHANGE_RATE_CHARTS.find((c) => c.key === expandedChart.key)?.label || "";
+    if (expandedChart.source === "exchange") return exchangeCharts.find((c) => c.key === expandedChart.key)?.label || "";
     return "";
   };
 
@@ -938,8 +949,8 @@ export function SignalDetail() {
             className="mb-8"
           >
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {EXCHANGE_RATE_CHARTS.map((c) => {
-                const series = exchangeRateData[c.key];
+              {exchangeCharts.map((c) => {
+                const series = exchangeSeries[c.key];
                 if (!series) {
                   return (
                     <div key={c.key} className="flex h-full flex-col">

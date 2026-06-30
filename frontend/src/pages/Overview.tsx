@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { TrendingUp, TrendingDown, Minus, Calendar, MapPin, Tag, Globe, HelpCircle } from "lucide-react";
+import { Calendar, MapPin, Tag, Globe, Sparkles, X } from "lucide-react";
 import {
   countries,
   signalLabels,
@@ -64,17 +64,6 @@ function ChangeCell({
 }) {
   const direction = getChange(currentLevel, referenceLevel);
 
-  const icon =
-    direction === "deteriorated" ? (
-      <TrendingUp className="h-3.5 w-3.5 text-danger-700" />
-    ) : direction === "improved" ? (
-      <TrendingDown className="h-3.5 w-3.5 text-success-600" />
-    ) : direction === "missing" ? (
-      <HelpCircle className="h-3.5 w-3.5 text-neutral-400" />
-    ) : (
-      <Minus className="h-3.5 w-3.5 text-ivory-700" />
-    );
-
   const label =
     direction === "deteriorated" ? "Deteriorated" :
     direction === "improved"     ? "Improved" :
@@ -105,7 +94,6 @@ function ChangeCell({
           className={`h-auto w-full flex-col gap-1 rounded p-2 ${bg}`}
         >
           <div className="flex items-center gap-1">
-            {icon}
             <span className={`text-xs font-medium ${labelColor}`}>{label}</span>
           </div>
         </Button>
@@ -159,6 +147,43 @@ function NewsCard({ news }: { news: (typeof mockNewsData)[0] }) {
 
 // ── main component ────────────────────────────────────────────────────────────
 
+function AINotice() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed right-4 top-4 z-50 w-72 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 rounded-md border border-blue-200 bg-white px-3 py-2 shadow-lg"
+    >
+      <div className="flex items-start gap-1.5">
+        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600" />
+        <div className="flex-1 text-[11px] leading-snug text-neutral-700">
+          <p>
+            The information synthesized on this page was collected and processed
+            using AI models. Please review all information carefully.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setVisible(false)}
+          aria-label="Dismiss notification"
+          className="shrink-0 rounded p-0.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function Overview() {
   const navigate = useNavigate();
   const [refPeriod, setRefPeriod] = useState<ReferencePeriod>("lastWeek");
@@ -171,6 +196,7 @@ export function Overview() {
 
   return (
     <div className="flex h-full flex-col bg-white">
+      <AINotice />
       <WFPHeader title="Market Signals Dashboard" />
 
       <div className="flex-1 space-y-10 overflow-auto px-8 py-6">

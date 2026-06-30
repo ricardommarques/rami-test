@@ -915,8 +915,10 @@ export interface AiUpdatePoint {
   value: number;
   unit: string;
   date: string;
-  source: string;
-  url: string;
+  // Omitted for derived values (e.g. the black-market premium, which is
+  // computed from the official and black-market rates rather than sourced).
+  source?: string;
+  url?: string;
 }
 
 export interface CommodityData {
@@ -2081,6 +2083,31 @@ export const energyPriceData: Record<string, CommodityData> = {
 
 // ── Exchange rate time-series ─────────────────────────────────────────────────
 
+// Black-market premium = how far the black-market rate sits above the official
+// rate, as a percentage of the official rate: ((black − official) / official) × 100.
+// Derived from the two rate series so it is always internally consistent.
+function computePremiumSeries(
+  official: CommodityData,
+  blackMarket: CommodityData,
+  meta: { date: string },
+): CommodityData {
+  const pct = (black: number, off: number) => Math.round(((black - off) / off) * 100);
+  return {
+    unit: '% above official rate',
+    wfpPoints: official.wfpPoints.map((p, i) => ({
+      date: p.date,
+      price: pct(blackMarket.wfpPoints[i].price, p.price),
+    })),
+    // No source/url: this value is derived from the official and black-market
+    // rate series, not collected from an external source.
+    aiUpdate: {
+      value: pct(blackMarket.aiUpdate.value, official.aiUpdate.value),
+      unit: '% Premium',
+      date: meta.date,
+    },
+  };
+}
+
 export const exchangeRateData: Record<string, CommodityData> = {
   // Official (central-bank) rate — stays broadly flat as it is administered.
   officialRate: {
@@ -2125,38 +2152,94 @@ export const exchangeRateData: Record<string, CommodityData> = {
       { date: '21 Apr', price: 107000 },
     ],
     aiUpdate: {
-      value: 112000,
+      value: 130000,
       unit: 'LBP / USD',
       date: '12 May 2026',
       source: 'LiveLira – Lebanon Exchange Rate Tracker',
       url: 'https://livelira.com/',
     },
   },
-  // Premium of the black-market rate over the official rate.
-  premium: {
-    unit: '% above official rate',
+};
+
+// Premium derived from the official and black-market rate series above.
+exchangeRateData.premium = computePremiumSeries(
+  exchangeRateData.officialRate,
+  exchangeRateData.blackMarketRate,
+  { date: '12 May 2026' },
+);
+
+// Syria exchange-rate time-series — denominated in SYP (Syrian pound).
+const syriaExchangeRateData: Record<string, CommodityData> = {
+  // Official (Central Bank of Syria) rate — administered, broadly flat.
+  officialRate: {
+    unit: 'SYP / USD (official)',
     wfpPoints: [
-      { date: '03 Feb', price: 12 },
-      { date: '10 Feb', price: 14 },
-      { date: '17 Feb', price: 15 },
-      { date: '24 Feb', price: 16 },
-      { date: '03 Mar', price: 18 },
-      { date: '10 Mar', price: 20 },
-      { date: '17 Mar', price: 22 },
-      { date: '24 Mar', price: 24 },
-      { date: '31 Mar', price: 26 },
-      { date: '07 Apr', price: 28 },
-      { date: '14 Apr', price: 30 },
-      { date: '21 Apr', price: 33 },
+      { date: '03 Feb', price: 12500 },
+      { date: '10 Feb', price: 12500 },
+      { date: '17 Feb', price: 12600 },
+      { date: '24 Feb', price: 12600 },
+      { date: '03 Mar', price: 12700 },
+      { date: '10 Mar', price: 12700 },
+      { date: '17 Mar', price: 12800 },
+      { date: '24 Mar', price: 12800 },
+      { date: '31 Mar', price: 12900 },
+      { date: '07 Apr', price: 12900 },
+      { date: '14 Apr', price: 13000 },
+      { date: '21 Apr', price: 13000 },
     ],
     aiUpdate: {
-      value: 37,
-      unit: '% premium',
+      value: 13050,
+      unit: 'SYP / USD',
       date: '12 May 2026',
-      source: 'Syria Direct – Black Market Report',
-      url: 'https://syriadirect.org/',
+      source: 'Central Bank of Syria – Official Rate',
+      url: 'https://www.cb.gov.sy/',
     },
   },
+  // Black-market (parallel) rate — the rate households actually transact at.
+  blackMarketRate: {
+    unit: 'SYP / USD (black market)',
+    wfpPoints: [
+      { date: '03 Feb', price: 12800 },
+      { date: '10 Feb', price: 12950 },
+      { date: '17 Feb', price: 13050 },
+      { date: '24 Feb', price: 13150 },
+      { date: '03 Mar', price: 13250 },
+      { date: '10 Mar', price: 13350 },
+      { date: '17 Mar', price: 13500 },
+      { date: '24 Mar', price: 13650 },
+      { date: '31 Mar', price: 13750 },
+      { date: '07 Apr', price: 13850 },
+      { date: '14 Apr', price: 13950 },
+      { date: '21 Apr', price: 14050 },
+    ],
+    aiUpdate: {
+      value: 14200,
+      unit: 'SYP / USD',
+      date: '12 May 2026',
+      source: 'WFP Syria FX monitoring – Parallel Market',
+      url: 'https://www.wfp.org/countries/syria',
+    },
+  },
+};
+
+// Premium derived from the official and black-market rate series above.
+syriaExchangeRateData.premium = computePremiumSeries(
+  syriaExchangeRateData.officialRate,
+  syriaExchangeRateData.blackMarketRate,
+  { date: '12 May 2026' },
+);
+
+// Per-country exchange-rate datasets. Countries not listed fall back to the
+// default `exchangeRateData` (Lebanon / LBP).
+export const exchangeRateDataByCountry: Record<string, Record<string, CommodityData>> = {
+  Lebanon: exchangeRateData,
+  Syria: syriaExchangeRateData,
+};
+
+// Currency code used for exchange-rate chart labels, by country.
+export const currencyByCountry: Record<string, string> = {
+  Lebanon: 'LBP',
+  Syria: 'SYP',
 };
 
 export const chatbotResponses: Record<string, string[]> = {
