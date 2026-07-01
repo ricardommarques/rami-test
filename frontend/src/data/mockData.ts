@@ -2100,11 +2100,14 @@ function computePremiumSeries(
     })),
     // No source/url: this value is derived from the official and black-market
     // rate series, not collected from an external source.
-    aiUpdate: {
-      value: pct(blackMarket.aiUpdate.value, official.aiUpdate.value),
-      unit: '% Premium',
-      date: meta.date,
-    },
+    aiUpdate:
+      blackMarket.aiUpdate && official.aiUpdate
+        ? {
+            value: pct(blackMarket.aiUpdate.value, official.aiUpdate.value),
+            unit: '% Premium',
+            date: meta.date,
+          }
+        : null,
   };
 }
 
