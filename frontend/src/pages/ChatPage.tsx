@@ -50,7 +50,7 @@ export function ChatPage() {
       id: 0,
       role: "assistant",
       content:
-        "Hello. I'm the WFP Market Intelligence Assistant. I have access to market monitoring data, AI-collected signals, and news intelligence across **Lebanon**, **Syria**, and **Palestine**. You can ask me about price trends, food availability, market access, programming recommendations, or any other aspect of the regional food security situation.",
+        "Hello. I'm the WFP Market Signals Assistant. I have access to market monitoring data, AI-collected signals, and news intelligence across **Lebanon**, **Syria**, and **Palestine**. You can ask me about price trends, food availability, market access, programming recommendations, or any other aspect of the regional food security situation.",
       timestamp: new Date(),
     },
   ]);
@@ -91,7 +91,7 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <WFPHeader title="AI Market Intelligence Assistant" />
+      <WFPHeader title="AI Market Signals Assistant" />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Suggested questions panel */}

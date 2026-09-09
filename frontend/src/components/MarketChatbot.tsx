@@ -68,7 +68,7 @@ export function MarketChatbot({
     {
       id: 0,
       role: "assistant",
-      content: `Hello. I'm the WFP Market Intelligence Assistant. I have access to price monitoring data, AI-collected signals, and news intelligence for **${signalLabel}** in **${country}**. Ask me anything about the current situation, trends, or programming implications.`,
+      content: `Hello. I'm the WFP Market Signals Assistant. I have access to price monitoring data, AI-collected signals, and news intelligence for **${signalLabel}** in **${country}**. Ask me anything about the current situation, trends, or programming implications.`,
       timestamp: new Date(),
     },
   ]);
@@ -126,7 +126,7 @@ export function MarketChatbot({
             <Bot className="h-5 w-5" />
             <div>
               <SheetTitle className="text-sm font-medium text-primary-foreground">
-                WFP Market Intelligence Assistant
+                WFP Market Signals Assistant
               </SheetTitle>
               <SheetDescription className="text-xs text-primary-foreground opacity-75">
                 {country} — {signalLabel}

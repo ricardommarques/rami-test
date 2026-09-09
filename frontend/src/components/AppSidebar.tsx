@@ -30,7 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     icon: <Bot />,
     label: "AI Assistant",
-    subtitle: "Market intelligence chat",
+    subtitle: "Market signals chat",
     path: "/chat",
     matchPaths: /^\/chat$/,
   },
@@ -96,7 +96,7 @@ export function AppSidebar() {
         <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
           <p className="mb-1 text-[10px] uppercase tracking-wider text-neutral-400">About</p>
           <p className="text-xs leading-snug text-neutral-400">
-            AI-enabled market intelligence to support WFP crisis response operations in the Middle
+            AI-enabled market signals to support WFP crisis response operations in the Middle
             East, with content extracted and reviewed by AI models. Please review all information.
           </p>
         </div>
