@@ -37,10 +37,20 @@ stop_app() {
   fi
 }
 
+run_daemon() {
+  if command -v setsid >/dev/null 2>&1; then
+    setsid "$@"
+  elif command -v perl >/dev/null 2>&1; then
+    perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV' "$@"
+  else
+    "$@"
+  fi
+}
+
 start_frontend() {
   echo "Starting frontend..."
   cd "$ROOT_DIR/frontend"
-  setsid npm run dev >"$RUN_DIR/frontend.log" 2>&1 &
+  run_daemon npm run dev >"$RUN_DIR/frontend.log" 2>&1 &
   echo $! >"$RUN_DIR/frontend.pid"
   echo "Frontend started (pid $(cat "$RUN_DIR/frontend.pid")). Logs: .run/frontend.log"
 }
